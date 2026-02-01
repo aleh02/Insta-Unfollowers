@@ -128,3 +128,20 @@ Then double-click the HTML file.
 - The tool compares followers only (correct definition of “unfollowed you”).
 
 - Snapshots are kept so you can compare different points in time.
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License**.  
+See the [LICENSE](./LICENSE) file for details.
+
+---
+
+## 👤 Author
+
+Alessandro Han
+
+Computer Science, University of Pisa
+
+LinkedIn: https://www.linkedin.com/in/alessandro-han-b87391223/
