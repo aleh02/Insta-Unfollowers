@@ -14,27 +14,19 @@ A **local, privacy-safe** tool to find who unfollowed you on Instagram using **o
 
 Your project should look like this:
 
+```bash
 insta-unfollowers/
-
 ├─ insta-unfollowers.js
-
 ├─ export_old/
-
 │ └─ followers_1.json
-
 │ └─ following.json
-
 ├─ export_new/
-
 │ └─ followers_1.json
-
 │ └─ following.json
-
 ├─ .snapshots/ (auto-generated)
-
 ├─ .reports/ (auto-generated)
-
 └─ .gitignore
+```
 
 ---
 
