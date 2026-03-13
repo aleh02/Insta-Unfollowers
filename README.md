@@ -144,4 +144,4 @@ Alessandro Han
 
 Computer Science, University of Pisa
 
-LinkedIn: https://www.linkedin.com/in/alessandro-han-b87391223/
+LinkedIn: https://www.linkedin.com/in/aleh02

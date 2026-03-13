@@ -238,3 +238,4 @@ function printWindowsPath(linuxPath) {
     process.exit(1);
   }
 })();
+
