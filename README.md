@@ -1,12 +1,13 @@
 # Instagram Unfollowers (JSON Export)
 
-A **local, privacy-safe** tool to find who unfollowed you on Instagram using **official Instagram JSON exports**.
+A **local, privacy-safe** tool to track Instagram follower changes and see who you follow that does not follow you back, using **official Instagram JSON exports**.
 
 - No login
 - No API
 - No third-party services
 - Runs locally with **Node.js**
 - Generates a **clickable HTML report**
+- Shows people you follow who do not follow you back, sorted from most recent to least recent
 
 ---
 
@@ -62,6 +63,10 @@ node insta-unfollowers.js
     - ❌ Unfollowers
 
     - ➕ New followers
+
+    - 👀 People you follow who don't follow you back
+
+      Sorted by follow date from most recent to least recent when Instagram includes timestamps
 
 - Generates an HTML report with clickable Instagram profile links
 
@@ -126,6 +131,8 @@ Then double-click the HTML file.
 - Instagram exports can change structure slightly — the parser is defensive and recursive.
 
 - The tool compares followers only (correct definition of “unfollowed you”).
+
+- The "don't follow back" section is built from your latest `following.json` and ordered by Instagram's follow timestamps when available.
 
 - Snapshots are kept so you can compare different points in time.
 

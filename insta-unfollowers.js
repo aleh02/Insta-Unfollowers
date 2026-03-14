@@ -28,6 +28,12 @@ function profileLink(username) {
   return `https://www.instagram.com/${username}/`;
 }
 
+function usernameFromHref(href) {
+  if (!href) return "";
+  const match = String(href).match(/instagram\.com\/(?:_u\/)?([^/?#]+)/i);
+  return normalizeUsername(match ? match[1] : "");
+}
+
 // Recursively walk JSON and collect nodes that contain "string_list_data"
 function* findStringListDataNodes(obj) {
   if (Array.isArray(obj)) {
@@ -51,6 +57,34 @@ function extractUsernames(data) {
     }
   }
   return set;
+}
+
+function extractFollowingRecords(data) {
+  const records = [];
+  const seen = new Set();
+
+  for (const node of findStringListDataNodes(data)) {
+    for (const item of node.string_list_data || []) {
+      if (!item || typeof item !== "object") continue;
+
+      const username = normalizeUsername(item.value || node.title || usernameFromHref(item.href));
+      if (!username || seen.has(username)) continue;
+
+      seen.add(username);
+      records.push({
+        username,
+        timestamp: Number.isFinite(item.timestamp) ? item.timestamp : null,
+      });
+    }
+  }
+
+  records.sort((a, b) => {
+    const aTs = a.timestamp ?? -Infinity;
+    const bTs = b.timestamp ?? -Infinity;
+    return bTs - aTs;
+  });
+
+  return records;
 }
 
 function resolveExportFiles(exportDir) {
@@ -82,8 +116,9 @@ function resolveExportFiles(exportDir) {
 function loadFollowersAndFollowing(exportDir) {
   const { followersPath, followingPath } = resolveExportFiles(exportDir);
   const followers = extractUsernames(readJson(followersPath));
-  const following = extractUsernames(readJson(followingPath));
-  return { followers, following };
+  const followingRecords = extractFollowingRecords(readJson(followingPath));
+  const following = new Set(followingRecords.map((record) => record.username));
+  return { followers, following, followingRecords };
 }
 
 function nowSlug() {
@@ -96,7 +131,7 @@ function nowSlug() {
 
 function saveSnapshot(exportDir, label) {
   ensureDirs();
-  const { followers, following } = loadFollowersAndFollowing(exportDir);
+  const { followers, following, followingRecords } = loadFollowersAndFollowing(exportDir);
 
   const name = `${nowSlug()}__${label}.json`;
   const outPath = path.join(SNAP_DIR, name);
@@ -108,17 +143,32 @@ function saveSnapshot(exportDir, label) {
     counts: { followers: followers.size, following: following.size },
     followers: Array.from(followers).sort(),
     following: Array.from(following).sort(),
+    following_records: followingRecords,
   };
 
   fs.writeFileSync(outPath, JSON.stringify(snapshot, null, 2), "utf8");
   return outPath;
 }
 
-function makeReportHtml({ unfollowers, newFollowers, oldCount, newCount }) {
+function formatFollowedAt(timestamp) {
+  if (!timestamp) return "Unknown date";
+  return new Date(timestamp * 1000).toLocaleString();
+}
+
+function makeReportHtml({ unfollowers, newFollowers, notFollowingBack, oldCount, newCount }) {
   const li = (u) =>
     `<li><a href="${profileLink(u)}" target="_blank" rel="noopener noreferrer">@${u}</a></li>`;
+  const datedLi = ({ username, timestamp }) =>
+    `<li><a href="${profileLink(
+      username
+    )}" target="_blank" rel="noopener noreferrer">@${username}</a> <span class="date">followed ${formatFollowedAt(
+      timestamp
+    )}</span></li>`;
   const unfHtml = unfollowers.length ? unfollowers.map(li).join("\n") : "<li><em>None 🎉</em></li>";
   const newfHtml = newFollowers.length ? newFollowers.map(li).join("\n") : "<li><em>None</em></li>";
+  const notFollowingBackHtml = notFollowingBack.length
+    ? notFollowingBack.map(datedLi).join("\n")
+    : "<li><em>None 🎉</em></li>";
 
   return `<!doctype html>
 <html lang="en">
@@ -136,6 +186,7 @@ function makeReportHtml({ unfollowers, newFollowers, oldCount, newCount }) {
     a { text-decoration: none; }
     a:hover { text-decoration: underline; }
     .pill { display:inline-block; padding: 2px 10px; border-radius: 999px; border: 1px solid #ddd; font-size: 12px; margin-left: 8px; }
+    .date { color: #666; font-size: 13px; }
   </style>
 </head>
 <body>
@@ -151,6 +202,9 @@ function makeReportHtml({ unfollowers, newFollowers, oldCount, newCount }) {
 
     <h2>New followers (${newFollowers.length})</h2>
     <ul>${newfHtml}</ul>
+
+    <h2>People you follow who don't follow you back (${notFollowingBack.length})</h2>
+    <ul>${notFollowingBackHtml}</ul>
   </div>
 </body>
 </html>`;
@@ -162,9 +216,16 @@ function compareSnapshots(oldSnapPath, newSnapPath) {
 
   const oldSet = new Set(oldSnap.followers.map(normalizeUsername));
   const newSet = new Set(newSnap.followers.map(normalizeUsername));
+  const followingRecords = Array.isArray(newSnap.following_records)
+    ? newSnap.following_records.map((record) => ({
+        username: normalizeUsername(record.username),
+        timestamp: Number.isFinite(record.timestamp) ? record.timestamp : null,
+      }))
+    : newSnap.following.map((username) => ({ username: normalizeUsername(username), timestamp: null }));
 
   const unfollowers = Array.from(oldSet).filter((u) => !newSet.has(u)).sort();
   const newFollowers = Array.from(newSet).filter((u) => !oldSet.has(u)).sort();
+  const notFollowingBack = followingRecords.filter(({ username }) => username && !newSet.has(username));
 
   const reportName = `report__${path.basename(oldSnapPath, ".json")}__TO__${path.basename(
     newSnapPath,
@@ -174,11 +235,17 @@ function compareSnapshots(oldSnapPath, newSnapPath) {
 
   fs.writeFileSync(
     reportPath,
-    makeReportHtml({ unfollowers, newFollowers, oldCount: oldSet.size, newCount: newSet.size }),
+    makeReportHtml({
+      unfollowers,
+      newFollowers,
+      notFollowingBack,
+      oldCount: oldSet.size,
+      newCount: newSet.size,
+    }),
     "utf8"
   );
 
-  return { unfollowers, newFollowers, reportPath };
+  return { unfollowers, newFollowers, notFollowingBack, reportPath };
 }
 
 function isWSL() {
@@ -223,7 +290,7 @@ function printWindowsPath(linuxPath) {
     console.log("  OLD:", oldSnap);
     console.log("  NEW:", newSnap);
 
-    const { unfollowers, newFollowers, reportPath } = compareSnapshots(oldSnap, newSnap);
+    const { unfollowers, newFollowers, notFollowingBack, reportPath } = compareSnapshots(oldSnap, newSnap);
 
     console.log(`✅ Report generated: ${reportPath}`);
     console.log(`Unfollowers (${unfollowers.length}):`);
@@ -232,10 +299,14 @@ function printWindowsPath(linuxPath) {
     console.log(`\nNew followers (${newFollowers.length}):`);
     newFollowers.forEach((u) => console.log(` + @${u}  ${profileLink(u)}`));
 
+    console.log(`\nPeople you follow who don't follow you back (${notFollowingBack.length}):`);
+    notFollowingBack.forEach(({ username, timestamp }) =>
+      console.log(` - @${username}  ${profileLink(username)}  followed ${formatFollowedAt(timestamp)}`)
+    );
+
     printWindowsPath(path.dirname(reportPath));
   } catch (e) {
     console.error(`❌ ${e.message || e}`);
     process.exit(1);
   }
 })();
-
