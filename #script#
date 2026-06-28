@@ -1,4 +1,11 @@
-#!/usr/bin/env node
+ npm install
+ npm install
+ python - <<'PY'
+from pathlib import Path
+root = Path('/home/aleh02/private/insta-unfollowers')
+cli = root / 'insta-unfollowers.js'
+readme = root / 'README.md'
+cli.write_text('''#!/usr/bin/env node
 "use strict";
 
 const fs = require("fs");
@@ -95,12 +102,12 @@ function saveSnapshot(exportDir, label, exportData) {
 function printWindowsPath(linuxPath) {
   try {
     const winPath = execSync(`wslpath -w "${linuxPath}"`).toString().trim();
-    console.log("\n📂 Open this folder in Windows Explorer:");
+    console.log("\n Open this folder in Windows Explorer:");
     console.log(winPath);
     console.log("\nOr run:");
     console.log(`explorer.exe "${winPath}"\n`);
   } catch {
-    console.log("\n📂 Report saved at:");
+    console.log("\n Report saved at:");
     console.log(linuxPath + "\n");
   }
 }
@@ -113,7 +120,7 @@ function printWindowsPath(linuxPath) {
     if (!fs.existsSync(exportOld)) throw new Error(`Missing folder: ${exportOld}`);
     if (!fs.existsSync(exportNew)) throw new Error(`Missing folder: ${exportNew}`);
 
-    console.log("⏳ Reading exports from:");
+    console.   Reading exports from:");
     console.log("  OLD:", exportOld);
     console.log("  NEW:", exportNew);
 
@@ -123,7 +130,7 @@ function printWindowsPath(linuxPath) {
     const oldSnap = saveSnapshot(exportOld, "old", oldData);
     const newSnap = saveSnapshot(exportNew, "new", newData);
 
-    console.log("✅ Snapshots saved:");
+    console. Snapshots saved:");
     console.log("  OLD:", oldSnap);
     console.log("  NEW:", newSnap);
 
@@ -140,7 +147,7 @@ function printWindowsPath(linuxPath) {
 
     fs.writeFileSync(reportPath, makeReportHtml({ ...comparison, generatedAt: new Date() }), "utf8");
 
-    console.log(`✅ Report generated: ${reportPath}`);
+    console. Report generated: ${reportPath}`);
     console.log(`Unfollowers (${comparison.unfollowers.length}):`);
     comparison.unfollowers.forEach(({ username, timestamp }) =>
       console.log(` - @${username}  ${profileLink(username)}  followed ${formatFollowedAt(timestamp)}`)
@@ -156,7 +163,106 @@ function printWindowsPath(linuxPath) {
 
     printWindowsPath(path.dirname(reportPath));
   } catch (error) {
-    console.error(`❌ ${error.message || error}`);
+    console. ${error.message || error}`);
     process.exit(1);
   }
 })();
+''', encoding='utf-8')
+
+readme.write_text('''# Instagram Unfollowers
+
+One-repo app for Instagram export analysis.
+
+- Node.js / Express backend
+- React frontend
+- Shared parser + diff logic
+- Inline HTML report from API
+
+## Requirements
+
+- Node.js  package.json
+```
+
+## Install
+
+```bash
+npm install
+```
+
+## Run
+
+Dev stack:
+
+```bash
+npm run dev
+```
+
+Backend: `http://localhost:3001`
+
+Frontend: `http://localhost:5173`
+
+Build frontend:
+
+```bash
+npm run build
+```
+
+Production backend:
+
+```bash
+npm start
+```
+
+CLI only:
+
+```bash
+node insta-unfollowers.js
+```
+
+## Upload modes
+
+Frontend accepts:
+
+- Zip uploads
+  - each zip must contain `followers_1.json` and `following.json`
+- Folder uploads
+  - browser directory picker for `export_old` and `export_new`
+- Raw JSON uploads
+  - `followers_1.json` and `following.json` for old and new exports
+
+## API response
+
+`POST /api/analyze` returns inline JSON with:
+
+- `counts`
+- `unfollowers`
+- `newFollowers`
+- `notFollowingBack`
+- `followingRecords`
+- `reportHtml`
+
+## CLI behavior
+
+CLI still reads local `export_old/` and `export_new/`, writes snapshots, and writes HTML report to `.reports/`.
+''', encoding='utf-8')
+PY
+ npm install
+ set -e && npm install && printf '\n__NPM_INSTALL_DONE__\n'
+ npm run dev:server
+ node -e "require('./server/app'); console.log('ok')"
+18+
+-  .reports/
+npm
+
+##    .snapshots/
+export_new/
+export_old/
+Layout
+
+``` client/
+bash
+  server/
+insta- lib/
+unfollowers.js
+insta-unfollowers/
+error(`log(`log("log("
