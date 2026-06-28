@@ -1,154 +1,90 @@
-# Instagram Unfollowers (JSON Export)
+# Instagram Unfollowers
 
-A **local, privacy-safe** tool to track Instagram follower changes and see who you follow that does not follow you back, using **official Instagram JSON exports**.
+One-repo app for Instagram export analysis.
 
-- No login
-- No API
-- No third-party services
-- Runs locally with **Node.js**
-- Generates a **clickable HTML report**
-- Shows people you follow who do not follow you back, sorted from most recent to least recent
+- Node.js / Express backend
+- React frontend
+- Shared parser + diff logic
+- Inline HTML report from API
 
----
+## Requirements
 
-## 📂 Folder structure
+- Node.js 18+
+- npm
 
-Your project should look like this:
+## Layout
 
 ```bash
 insta-unfollowers/
 ├─ insta-unfollowers.js
+├─ lib/
+├─ server/
+├─ client/
 ├─ export_old/
-│ └─ followers_1.json
-│ └─ following.json
 ├─ export_new/
-│ └─ followers_1.json
-│ └─ following.json
-├─ .snapshots/ (auto-generated)
-├─ .reports/ (auto-generated)
-└─ .gitignore
+├─ .snapshots/
+├─ .reports/
+└─ package.json
 ```
 
----
+## Install
 
-## 🚀 How to use
+```bash
+npm install
+```
 
-### 1) Put your Instagram exports in the folders
-- Old export → `export_old/`
-- New export → `export_new/`
+## Run
 
-(Do **not** rename the JSON files.)
+Dev stack:
 
----
+```bash
+npm run dev
+```
 
-### 2) Run the script
-From the project folder:
+Backend: `http://localhost:3001`
+
+Frontend: `http://localhost:5173`
+
+Build frontend:
+
+```bash
+npm run build
+```
+
+Production backend:
+
+```bash
+npm start
+```
+
+CLI only:
 
 ```bash
 node insta-unfollowers.js
 ```
 
----
+## Upload Modes
 
-## 📊 What it does automatically
+Frontend accepts:
 
-- Reads both exports
+- Zip uploads
+  - each zip must contain `followers_1.json` and `following.json`
+- Folder uploads
+  - browser directory picker for `export_old` and `export_new`
+- Raw JSON uploads
+  - `followers_1.json` and `following.json` for old and new exports
 
-- Creates timestamped snapshots
+## API Response
 
-- Compares followers (old → new)
+`POST /api/analyze` returns inline JSON with:
 
-- Detects:
+- `counts`
+- `unfollowers`
+- `newFollowers`
+- `notFollowingBack`
+- `followingRecords`
+- `reportHtml`
 
-    - ❌ Unfollowers
+## CLI Behavior
 
-    - ➕ New followers
-
-    - 👀 People you follow who don't follow you back
-
-      Sorted by follow date from most recent to least recent when Instagram includes timestamps
-
-- Generates an HTML report with clickable Instagram profile links
-
----
-
-## 📄 Where is the report?
-
-The report is saved locally in:
-
-```bash
-./.reports/
-```
-
-Example:
-
-```bash
-.reports/report__20260201_190244__old__TO__new.html
-```
-
-Open it:
-
-- VS Code: right-click .reports → Reveal in File Explorer
-
-- WSL terminal:
-
-```bash
-explorer.exe "$(wslpath -w ./.reports)"
-```
-
-Then double-click the HTML file.
-
----
-
-## 🔒 Privacy & safety
-
-- Uses only your local Instagram export
-
-- No network requests
-
-- No tracking
-
-- Nothing leaves your machine
-
----
-
-## 🛠 Requirements
-
-- Node.js ≥ 16
-
-- Works on:
-
-- Windows (WSL recommended)
-
-- Linux
-
-- macOS
-
----
-
-## 🧩 Notes
-
-- Instagram exports can change structure slightly — the parser is defensive and recursive.
-
-- The tool compares followers only (correct definition of “unfollowed you”).
-
-- The "don't follow back" section is built from your latest `following.json` and ordered by Instagram's follow timestamps when available.
-
-- Snapshots are kept so you can compare different points in time.
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License**.  
-See the [LICENSE](./LICENSE) file for details.
-
----
-
-## 👤 Author
-
-Alessandro Han
-
-Computer Science, University of Pisa
-
-LinkedIn: https://www.linkedin.com/in/aleh02
+CLI still reads local `export_old/` and `export_new/`, writes snapshots, and writes HTML report to `.reports/`.
