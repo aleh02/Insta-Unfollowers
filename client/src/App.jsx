@@ -88,14 +88,26 @@ export default function App() {
       <section className="shell">
         <header className="hero">
           <div className="eyebrow">Instagram export analyzer</div>
-          <h1>Find unfollowers from old export and new export.</h1>
+          <h1>Find unfollowers from old and new export.</h1>
           <p>
-            Upload zip files, folders, or raw JSON. Backend does diff, frontend shows result inline.
+            <br/> Upload zip files, folders, or raw JSON. You will get the results between the two uploaded files, 
+            so make sure to prepare the old export in advance! 
+            <br/>
+            <br/>
+            The followers export files can be retrieved from your Instagram profile: <br/> <br/>
+            Go to Menu/Settings {'>'} Accounts Center {'>'} Export your information {'>'} <br/>
+            Your information and permissions {'>'} Export your information {'>'} <br/>
+            Download to device (as JSON file, select date range and ONLY the Following category!!!) <br/> <br/>
+            Click 'Create export' and you will receive an email from Instagram to download the files. <br/>
           </p>
+          <h2>Results you will get:</h2>
           <div className="hero-meta">
-            <span>Node.js backend</span>
+            <span>Unfollowers</span>
+            <span>New followers</span>
+            <span>People not following back</span>
+            {/*<span>Node.js backend</span>
             <span>React frontend</span>
-            <span>Inline HTML report</span>
+            <span>Inline HTML report</span>*/}
           </div>
         </header>
 
