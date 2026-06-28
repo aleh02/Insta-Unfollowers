@@ -88,7 +88,7 @@ export default function App() {
       <section className="shell">
         <header className="hero">
           <div className="eyebrow">Instagram export analyzer</div>
-          <h1>Find unfollowers from export_old and export_new.</h1>
+          <h1>Find unfollowers from old export and new export.</h1>
           <p>
             Upload zip files, folders, or raw JSON. Backend does diff, frontend shows result inline.
           </p>
