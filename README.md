@@ -1,154 +1,183 @@
-# Instagram Unfollowers (JSON Export)
+# Instagram Unfollowers
 
-A **local, privacy-safe** tool to track Instagram follower changes and see who you follow that does not follow you back, using **official Instagram JSON exports**.
+Web app and CLI for comparing two Instagram data exports.
 
-- No login
-- No API
-- No third-party services
-- Runs locally with **Node.js**
-- Generates a **clickable HTML report**
-- Shows people you follow who do not follow you back, sorted from most recent to least recent
+It reports:
 
----
+- accounts that stopped following you;
+- new followers;
+- accounts you follow that do not follow you back;
+- follower and following totals.
 
-## 📂 Folder structure
+All analysis runs locally on your machine or server. Uploaded files are processed
+in memory and are not stored by the web app.
 
-Your project should look like this:
+## Requirements
+
+- Node.js `^20.19.0` or `>=22.12.0`
+- npm
+
+## Installation
 
 ```bash
-insta-unfollowers/
-├─ insta-unfollowers.js
-├─ export_old/
-│ └─ followers_1.json
-│ └─ following.json
-├─ export_new/
-│ └─ followers_1.json
-│ └─ following.json
-├─ .snapshots/ (auto-generated)
-├─ .reports/ (auto-generated)
-└─ .gitignore
+git clone https://github.com/aleh02/Insta-Unfollowers.git
+cd Insta-Unfollowers
+npm install
 ```
 
----
+## Get Instagram export files
 
-## 🚀 How to use
+From Instagram, open:
 
-### 1) Put your Instagram exports in the folders
-- Old export → `export_old/`
-- New export → `export_new/`
+1. **Settings**
+2. **Accounts Center**
+3. **Your information and permissions**
+4. **Export your information**
+5. **Create export**
+6. **Export to device**
 
-(Do **not** rename the JSON files.)
+Select JSON format and the **Followers and following** category. Download one
+export now and compare it with an older export.
 
----
+Each export must include:
 
-### 2) Run the script
-From the project folder:
+```text
+followers_and_following/
+├── followers_1.json
+└── following.json
+```
+
+Instagram may place these files in a differently named parent directory. Only
+the two JSON filenames matter.
+
+> Export files contain personal data. Do not commit or share them.
+
+## Web app
+
+Start backend and frontend in development mode:
+
+```bash
+npm run dev
+```
+
+- Frontend: <http://localhost:5173>
+- API: <http://localhost:3001>
+
+The app supports three upload modes:
+
+- **Zip:** one old export and one new export; each archive must contain
+  `followers_1.json` and `following.json`.
+- **Folder:** select old and new export directories.
+- **Raw JSON:** select both required JSON files for each export.
+
+Maximum upload size is 25 MB per file.
+
+## CLI
+
+Create these directories in the project root:
+
+```text
+export_old/
+├── followers_1.json
+└── following.json
+
+export_new/
+├── followers_1.json
+└── following.json
+```
+
+The files may also remain inside a `followers_and_following/` subdirectory.
+Then run:
 
 ```bash
 node insta-unfollowers.js
 ```
 
----
+The CLI writes:
 
-## 📊 What it does automatically
+- JSON snapshots to `.snapshots/`;
+- an HTML comparison report to `.reports/`;
+- a summary to the terminal.
 
-- Reads both exports
+## Production
 
-- Creates timestamped snapshots
-
-- Compares followers (old → new)
-
-- Detects:
-
-    - ❌ Unfollowers
-
-    - ➕ New followers
-
-    - 👀 People you follow who don't follow you back
-
-      Sorted by follow date from most recent to least recent when Instagram includes timestamps
-
-- Generates an HTML report with clickable Instagram profile links
-
----
-
-## 📄 Where is the report?
-
-The report is saved locally in:
+Build the React frontend and start the Express server:
 
 ```bash
-./.reports/
+npm run build
+npm start
 ```
+
+The production server listens on `PORT`, defaulting to `3001`, and serves both
+the API and built frontend.
 
 Example:
 
 ```bash
-.reports/report__20260201_190244__old__TO__new.html
+PORT=8080 npm start
 ```
 
-Open it:
+### Update a PM2 deployment
 
-- VS Code: right-click .reports → Reveal in File Explorer
-
-- WSL terminal:
+Replace SSH key path, host, and project directory with values used by your VM:
 
 ```bash
-explorer.exe "$(wslpath -w ./.reports)"
+ssh -i ~/.ssh/your-key.pem ubuntu@YOUR_SERVER_IP
+cd ~/Insta-Unfollowers
+git pull --ff-only
+npm install
+npm run build
+pm2 restart insta-unfollowers --update-env
 ```
 
-Then double-click the HTML file.
+Check deployment:
 
----
+```bash
+pm2 status
+pm2 logs insta-unfollowers --lines 50
+```
 
-## 🔒 Privacy & safety
+## API
 
-- Uses only your local Instagram export
+`GET /api/health` returns:
 
-- No network requests
+```json
+{
+  "ok": true
+}
+```
 
-- No tracking
+`POST /api/analyze` accepts `multipart/form-data` and returns:
 
-- Nothing leaves your machine
+```text
+mode
+counts
+unfollowers
+newFollowers
+notFollowingBack
+followingRecords
+reportHtml
+```
 
----
+## Development
 
-## 🛠 Requirements
+```bash
+npm test
+npm run build
+```
 
-- Node.js ≥ 16
+Project structure:
 
-- Works on:
+```text
+insta-unfollowers/
+├── client/                # React frontend
+├── server/                # Express API and production server
+├── lib/instagram.js       # Shared parsing, comparison, and report logic
+├── test/                  # Node.js tests
+├── insta-unfollowers.js   # CLI entry point
+└── package.json
+```
 
-- Windows (WSL recommended)
+## License
 
-- Linux
-
-- macOS
-
----
-
-## 🧩 Notes
-
-- Instagram exports can change structure slightly — the parser is defensive and recursive.
-
-- The tool compares followers only (correct definition of “unfollowed you”).
-
-- The "don't follow back" section is built from your latest `following.json` and ordered by Instagram's follow timestamps when available.
-
-- Snapshots are kept so you can compare different points in time.
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License**.  
-See the [LICENSE](./LICENSE) file for details.
-
----
-
-## 👤 Author
-
-Alessandro Han
-
-Computer Science, University of Pisa
-
-LinkedIn: https://www.linkedin.com/in/aleh02
+[MIT](LICENSE)
